@@ -2,64 +2,79 @@
     <view class="container">
         <!-- 顶部：运单号和状态 -->
         <view class="top-bar">
-            <view class="waybill-no">运单号：1234567890</view>
-            <view class="status">状态：已签收</view>
+            <view class="waybill-no">运单号：{{ detail.trade_no }}</view>
+            <view class="status">状态：{{ statusText(detail.status) }}</view>
         </view>
 
         <!-- 收件人和电话 -->
         <view class="recipient">
-            <view>收件人：张三</view>
-            <view>电话：13800000000</view>
+            <view>收件人：{{ detail.consignee_name || '-' }}</view>
+            <view>电话：{{ detail.consignee_phone || '-' }}</view>
         </view>
 
         <!-- 物料表格 -->
         <view class="material-table">
             <view class="table-header">
-                <view class="col name">物料名称</view>
+                <view class="col name">产品型号</view>
                 <view class="col qty">数量</view>
+                <view class="col unit">单位</view>
+                <view class="col spec">技术规范</view>
             </view>
-            <view class="table-row" v-for="item in materials" :key="item.id">
-                <view class="col name">{{ item.name }}</view>
-                <view class="col qty">{{ item.qty }}</view>
+            <view class="table-row" v-for="item in products" :key="item.id">
+                <view class="col name">{{ item.product_model }}</view>
+                <view class="col qty">{{ item.product_num }}</view>
+                <view class="col unit">{{ item.product_unit }}</view>
+                <view class="col spec">{{ item.technical_spec }}</view>
             </view>
         </view>
 
-        <!-- 留言框 -->
-        <view class="messages">
+        <!-- 留言框（接口无数据，先隐藏或留空） -->
+        <!-- <view class="messages">
             <view class="msg-title">订单留言</view>
-            <view class="msg-list">
-                <view class="msg-item" v-for="msg in messages" :key="msg.id">
-                    <view class="msg-content">{{ msg.content }}</view>
-                    <view class="msg-time">{{ msg.time }}</view>
-                </view>
-            </view>
-        </view>
+            <view class="msg-list"></view>
+        </view> -->
 
-        <!-- 反馈时间 -->
-        <view class="feedback-time">
-            反馈时间：2024-06-01 10:00
-        </view>
+        <!-- 反馈时间（接口无数据，先隐藏或留空） -->
+        <!-- <view class="feedback-time">
+            反馈时间：
+        </view> -->
 
         <!-- 底部：部门和签收人 -->
         <view class="bottom-bar">
-            <view class="dept">部门：物流部</view>
-            <view class="signer">签收人：李四</view>
+            <view class="dept">部门：{{ detail.dept_name || '-' }}</view>
+            <view class="signer">签收人：{{ detail.consignee_name || '-' }}</view>
         </view>
     </view>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { staffDetail } from '@/api/staff'
+import { onLoad } from '@dcloudio/uni-app'
 
-const materials = ref([
-    { id: 1, name: '物料A', qty: 10 },
-    { id: 2, name: '物料B', qty: 5 }
-])
+const detail = ref({})
+const products = ref([])
 
-const messages = ref([
-    { id: 1, content: '请尽快处理', time: '2024-06-01 09:00' },
-    { id: 2, content: '已收到', time: '2024-06-01 09:30' }
-])
+function statusText(status) {
+    // 根据实际业务调整
+    switch (status) {
+        case 1: return '已签收'
+        case 0: return '未签收'
+        default: return '-'
+    }
+}
+
+onLoad((options) => {
+    const trade_no = options.trade_no
+    staffDetail({trade_no}).then(res => {
+        if (res && res.data) {
+            detail.value = res.data
+            products.value = res.data.products || []
+        }
+    }).catch(err => {
+        console.error('获取运单详情失败', err)
+    })
+})
 </script>
 
 <style lang="scss" scoped>
@@ -97,6 +112,8 @@ const messages = ref([
         flex: 1;
         &.name { text-align: left; }
         &.qty { text-align: right; }
+        &.unit { text-align: right; }
+        &.spec { text-align: right; }
     }
 }
 .messages {

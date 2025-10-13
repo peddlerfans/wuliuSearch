@@ -1,91 +1,54 @@
-<template>
-    <view class="staff-page">
-        <!-- Tabs -->
-        <view class="tabs">
-            <view v-for="(tab, idx) in tabs" :key="tab.value" :class="['tab', { active: currentTab === tab.value }]"
-                @tap="currentTab = tab.value">
-                {{ tab.label }}
-            </view>
-        </view>
-
-        <!-- List -->
-        <view class="waybill-list">
-            <view v-for="item in filteredList" :key="item.id" class="waybill-item">
-                <!-- Top: 运单号 (原单号) -->
-                <view class="waybill-header">
-                    <text class="waybill-no">{{ item.waybillNo }}</text>
-                    <text v-if="item.originalNo" class="original-no">（{{ item.originalNo }}）</text>
-                </view>
-                <!-- Middle: 收件人、电话、状态、箭头 -->
-                <view class="waybill-info">
-                    <view class="info-left">
-                        <text class="recipient">{{ item.recipient }}</text>
-                        <text class="phone">{{ item.phone }}</text>
-                    </view>
-                    <view class="info-right"></view>
-                    <text :class="['status', item.statusClass]">{{ item.statusText }}</text>
-                    <text class="arrow">➔</text>
-                </view>
-            </view>
-            <!-- Bottom: 详情按钮 -->
-            <view class="waybill-footer">
-                <button class="detail-btn" @tap="goToDetail(item)">详情</button>
-            </view>
-        </view>
-        <view v-if="filteredList.length === 0" class="empty">暂无数据</view>
-
-        <!-- 固定右下角按钮 -->
-        <button class="fixed-btn">固定按钮</button>
-    </view>
-</template>
-
 <script setup>
 import { ref, computed } from 'vue'
-
+import { onShow } from '@dcloudio/uni-app';
+import { staffList } from '@/api/staff'
+import { BASEURL } from '@/services/api.js'
 const tabs = [
     { label: '全部', value: 'all' },
-    { label: '待签收', value: 'pending' },
-    { label: '有疑义', value: 'questioned' },
-    { label: '已签收', value: 'signed' }
+    { label: '待签收', value: 1 },
+    { label: '有异议', value: 3 },
+    { label: '已签收', value: 2 },
+    { label: '已作废', value: 0 }
 ]
 const currentTab = ref('all')
 
-// 示例数据
-const waybillList = ref([
-    {
-        id: 1,
-        waybillNo: 'WB20240601001',
-        originalNo: 'OD20240531001',
-        recipient: '张三',
-        phone: '13800138000',
-        status: 'pending'
-    },
-    {
-        id: 2,
-        waybillNo: 'WB20240601002',
-        recipient: '李四',
-        phone: '13900139000',
-        status: 'signed'
-    },
-    {
-        id: 3,
-        waybillNo: 'WB20240601003',
-        recipient: '王五',
-        phone: '13700137000',
-        status: 'questioned'
-    }
-])
+const waybillList = ref([])
+
+onShow(() => {
+    fetchWaybillList()
+})
+
+function fetchWaybillList() {
+    staffList({ page: 1, size: 50 }).then(res => {
+        if (res && res.data) {
+            waybillList.value = res.data.map(item => ({
+                id: item.id,
+                trade_no: item.trade_no,
+                companyName: item.company_name,
+                packerName: item.packer_name,
+                inspectorName: item.inspector_name,
+                createTime: item.create_time,
+                status: item.status,
+                remark: item.remark
+            }))
+        }
+    }).catch(err => {
+        console.error('获取运单列表失败', err)
+    })
+}
 
 const statusMap = {
-    pending: { text: '待签收', class: 'pending' },
-    questioned: { text: '有疑义', class: 'questioned' },
-    signed: { text: '已签收', class: 'signed' }
+    0: { text: '已作废', class: 'abandoned' },
+    1: { text: '待签收', class: 'pending' },
+    2: { text: '已签收', class: 'signed' },
+    3: { text: '有异议', class: 'questioned' }
 }
 
 const filteredList = computed(() => {
     if (currentTab.value === 'all') return waybillList.value.map(addStatusText)
+    // 注意 currentTab 可能是字符串 '1'，item.status 是数字
     return waybillList.value
-        .filter(item => item.status === currentTab.value)
+        .filter(item => String(item.status) === String(currentTab.value))
         .map(addStatusText)
 })
 
@@ -99,12 +62,80 @@ function addStatusText(item) {
 }
 
 function goToDetail(item) {
-    // 跳转到详情页逻辑
     uni.navigateTo({
-        url: `/pages/staff/detail?id=${item.id}`
+        url: `/pages/staff/detail?trade_no=${item.trade_no}`
     })
 }
+
+function chooseImg() {
+    uni.chooseImage({
+        count: 1,
+        sizeType: ['original', 'compressed'], //可以指定是原图还是压缩图，默认二者都有
+        sourceType: ['album', 'camera'], //从相册选择
+        success: (res) => {
+            uni.showLoading();
+            uni.uploadFile({
+                url: BASEURL + '/api/upload/image', // 服务器上传接口
+                filePath: res.tempFilePaths[0],
+                header: {
+                    'Authorization': 'Bearer ' + uni.getStorageSync("token")
+                },
+                name: 'file', // 这里根据后端需要的字段来定义
+                success: uploadFileRes => {
+                    this.userInfo.head_img = JSON.parse(uploadFileRes.data).data.key
+                    this.submit()
+                    uni.hideLoading();
+                },
+                fail: uploadFileError => {
+                    // 处理上传失败的错误
+                    console.log("上传失败");
+                    uni.hideLoading();
+                }
+            });
+        }
+    })
+}
+
 </script>
+
+<template>
+    <view class="staff-page">
+        <!-- Tabs -->
+        <view class="tabs">
+            <view v-for="(tab, idx) in tabs" :key="tab.value" :class="['tab', { active: currentTab === tab.value }]"
+                @tap="currentTab = tab.value">
+                {{ tab.label }}
+            </view>
+        </view>
+
+        <!-- List -->
+        <view class="waybill-list">
+            <view v-for="item in filteredList" :key="item.id" class="waybill-item">
+                <view class="waybill-header">
+                    <text class="waybill-no">{{ item.trade_no }}</text>
+                    <text class="company-name">{{ item.companyName }}</text>
+                </view>
+                <view class="waybill-info">
+                    <view class="info-left">
+                        <text class="packer">打包: {{ item.packerName }}</text>
+                        <text class="inspector">验货: {{ item.inspectorName }}</text>
+                    </view>
+                    <view class="info-left">
+                        <text class="create-time">{{ item.createTime }}</text>
+                        <text :class="['status', item.statusClass]">{{ item.statusText }}</text>
+                    </view>
+                </view>
+                <view class="info-right" @tap="goToDetail(item)">
+                    <text>详情</text>
+                    <text class="arrow">➔</text>
+                </view>
+            </view>
+        </view>
+        <view v-if="filteredList.length === 0" class="empty">暂无数据</view>
+        <view class="fixed-btn" @click="chooseImg">上传</view>
+    </view>
+</template>
+
 
 <style lang="scss" scoped>
 .staff-page {
@@ -168,11 +199,13 @@ function goToDetail(item) {
 
 .waybill-info {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
+    border-bottom: 1px solid #eee;
 
     .info-left {
         display: flex;
+        justify-content: space-between;
         gap: 32rpx;
 
         .recipient {
@@ -186,31 +219,33 @@ function goToDetail(item) {
         }
     }
 
+    .status {
+        font-size: 26rpx;
+        padding: 4rpx 16rpx;
+        border-radius: 24rpx;
+
+        &.pending {
+            background: #fffbe6;
+            color: #faad14;
+        }
+
+        &.questioned {
+            background: #fff1f0;
+            color: #f5222d;
+        }
+
+        &.signed {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+    }
+
     .info-right {
         display: flex;
+        justify-content: space-between;
         align-items: center;
         gap: 16rpx;
 
-        .status {
-            font-size: 26rpx;
-            padding: 4rpx 16rpx;
-            border-radius: 24rpx;
-
-            &.pending {
-                background: #fffbe6;
-                color: #faad14;
-            }
-
-            &.questioned {
-                background: #fff1f0;
-                color: #f5222d;
-            }
-
-            &.signed {
-                background: #f6ffed;
-                color: #52c41a;
-            }
-        }
 
         .arrow {
             font-size: 32rpx;
@@ -246,13 +281,13 @@ function goToDetail(item) {
 .fixed-btn {
     position: fixed;
     right: 48rpx;
-    bottom: 48rpx;
+    bottom: 88rpx;
     z-index: 100;
     background: #1677ff;
     color: #fff;
     border: none;
-    border-radius: 50rpx;
-    padding: 20rpx 48rpx;
+    border-radius: 50%;
+    padding: 38rpx 38rpx;
     font-size: 30rpx;
     font-weight: 600;
     box-shadow: 0 4rpx 16rpx rgba(22, 119, 255, 0.15);

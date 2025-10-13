@@ -3,10 +3,45 @@
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "uni-app"
+				"navigationBarTitleText": "登录"
+			}
+		},
+		{
+			"path": "pages/staff/index",
+			"style": {
+				"navigationBarTitleText": "装箱单列表"
+			}
+		},
+		{
+			"path": "pages/staff/detail",
+			"style": {
+				"navigationBarTitleText": "装箱单详情"
+			}
+		},
+		{
+			"path": "pages/staff/uploadImg",
+			"style": {
+				"navigationBarTitleText": "导入图片"
 			}
 		}
 	],
+	"tabBar": {
+		"color": "#666666",
+		"selectedColor": "#1677FF",
+		"borderStyle": "white",
+		"backgroundColor": "#ffffff",
+		"list": [
+			{
+				"pagePath": "pages/staff/index",
+				"text": "装箱单"
+			},
+			{
+				"pagePath": "pages/staff/uploadImg",
+				"text": "上传"
+		
+			}
+		]
+	},
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",

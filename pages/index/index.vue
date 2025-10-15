@@ -61,7 +61,14 @@ function submitLogin() {
 		if (res.code == 200) {			
 			uni.setStorageSync('token', res.data.token)
 			uni.showToast({ title: '登录成功', icon: 'success' })
-			uni.switchTab({ url: '/pages/staff/index' })
+			if (loginType.value === 'employee') {
+				uni.reLaunch({ url: '/pages/staff/index' })
+				uni.setStorageSync('userType', 'employee')
+			} else {
+				uni.reLaunch({ url: '/pages/userSearch/index' })
+				uni.setStorageSync('userType', 'customer')
+			}
+			
 		} else {
 			uni.showToast({ title: res.message || '登录失败', icon: 'none' })
 		}

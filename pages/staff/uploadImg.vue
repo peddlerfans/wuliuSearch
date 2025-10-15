@@ -1,92 +1,126 @@
 <template>
     <view class="container">
+        <!-- 上传前提示 -->
         <view v-if="!uploadSuccess" class="info-text">
             点击按钮导入装箱单
         </view>
+
+        <!-- 上传后显示结果 -->
         <view v-else class="result">
             <view class="waybill">运单号：{{ waybillNo }}</view>
+
             <view class="material-table-wrapper">
                 <view class="material-table">
                     <view class="table-header">
-                        <view class="table-cell">物料名称</view>
+                        <view class="table-cell">物料型号</view>
                         <view class="table-cell">数量</view>
                     </view>
                     <view v-for="(item, idx) in materialList" :key="idx" class="table-row">
-                        <view class="table-cell">{{ item.name }}</view>
-                        <view class="table-cell">{{ item.count }}</view>
+                        <view class="table-cell">{{ item.product_model }}</view>
+                        <view class="table-cell">{{ item.product_num }}</view>
                     </view>
                 </view>
             </view>
+
             <view class="action-btns">
-                <button class="cancel-btn" @click="uploadSuccess = false">取消</button>
+                <button class="cancel-btn" @click="handleCancel">取消</button>
                 <button class="confirm-btn" @click="handleConfirm">确定</button>
             </view>
+
             <view class="tip-text">
                 点击确认后，该识别结果将存入数据库
             </view>
         </view>
+
+        <!-- 上传按钮 -->
         <button v-if="!uploadSuccess" class="upload-btn" @click="handleUpload" :loading="loading" :disabled="loading">
-            {{ uploadSuccess ? '重新上传' : '开始' }}
+            {{ loading ? '上传中...' : '开始' }}
         </button>
+        <CustomTabbar :tabs="staffTabs" current="pages/staff/uploadImg" />
     </view>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { staffConfirm } from '@/api/staff'
+import CustomTabbar from '@/components/CustomTabbar.vue'
+const BASEURL = 'https://djtestweb.youyong.org.cn'
 
 const uploadSuccess = ref(false)
 const loading = ref(false)
 const waybillNo = ref('')
 const materialList = ref([])
-
-function mockUploadApi() {
-    // 模拟接口，实际应替换为真实API调用
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            // 随机成功或失败
-            if (Math.random() > 0.3) {
-                resolve({
-                    waybillNo: 'WB123456789',
-                    materialList: [
-                        { name: '物料A', count: 10 },
-                        { name: '物料B', count: 5 }
-                    ]
-                })
-            } else {
-                reject(new Error('上传失败，请重试'))
-            }
-        }, 1500)
+const staffTabs = [
+    { pagePath: 'pages/staff/index', text: '装箱单' },
+    { pagePath: 'pages/staff/uploadImg', text: '上传' }
+]
+function handleUpload() {
+    uni.chooseImage({
+        count: 1,
+        sizeType: ['original', 'compressed'],
+        sourceType: ['album', 'camera'],
+        success: (res) => {
+            loading.value = true
+            uni.showLoading({ title: '上传中...' })
+            uni.uploadFile({
+                url: BASEURL + '/api/upload/image',
+                filePath: res.tempFilePaths[0],
+                header: {
+                    'Authorization': 'Bearer ' + uni.getStorageSync("token")
+                },
+                name: 'file',
+                success: uploadFileRes => {
+                    try {
+                        const result = JSON.parse(uploadFileRes.data)
+                        if ((result.code === 200 || result.code === 0) && result.data) {
+                            const data = result.data
+                            waybillNo.value = data.trade_no || ''
+                            materialList.value = data.products || []
+                            uploadSuccess.value = true
+                        } else {
+                            uni.showToast({ title: '上传失败：' + (result.msg || '未知错误'), icon: 'none' })
+                        }
+                    } catch (e) {
+                        console.error('解析失败', e)
+                        uni.showToast({ title: '返回数据异常', icon: 'none' })
+                    }
+                    loading.value = false
+                    uni.hideLoading()
+                },
+                fail: err => {
+                    console.error('上传失败', err)
+                    loading.value = false
+                    uni.hideLoading()
+                    uni.showToast({ title: '上传失败', icon: 'none' })
+                }
+            })
+        }
     })
 }
 
-function handleUpload() {
-    loading.value = true
+function handleCancel() {
     uploadSuccess.value = false
     waybillNo.value = ''
     materialList.value = []
-    mockUploadApi()
-        .then(res => {
-            waybillNo.value = res.waybillNo
-            materialList.value = res.materialList
-            uploadSuccess.value = true
-        })
-        .catch(err => {
-            uni.showToast({
-                title: err.message || '上传失败',
-                icon: 'none'
-            })
-        })
-        .finally(() => {
-            loading.value = false
-        })
 }
 
 function handleConfirm() {
-    // 这里可以添加存入数据库的逻辑
-    uni.showToast({
-        title: '已存入数据库',
-        icon: 'success'
-    })
+    if (!waybillNo.value) {
+        uni.showToast({ title: '未识别到运单号', icon: 'none' })
+        return
+    }
+    uni.showLoading({ title: '提交中...' })
+    staffConfirm({ trade_no: waybillNo.value, status: 1 })
+        .then(() => {
+            uni.hideLoading()
+            uni.showToast({ title: '确认成功', icon: 'success' })
+            uploadSuccess.value = false
+        })
+        .catch(err => {
+            console.error(err)
+            uni.hideLoading()
+            uni.showToast({ title: '提交失败', icon: 'none' })
+        })
 }
 </script>
 

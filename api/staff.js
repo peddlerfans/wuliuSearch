@@ -15,3 +15,12 @@ export function staffDetail(data) {
     data: data,
   });
 }
+
+//确认运单
+export function staffConfirm(data) {
+  return request({
+    method: "post",
+    url: "/api/user/setResult",
+    data: data,
+  });
+}

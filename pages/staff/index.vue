@@ -2,13 +2,17 @@
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app';
 import { staffList } from '@/api/staff'
-import { BASEURL } from '@/services/api.js'
+import CustomTabbar from '@/components/CustomTabbar.vue'
 const tabs = [
     { label: '全部', value: 'all' },
     { label: '待签收', value: 1 },
     { label: '有异议', value: 3 },
     { label: '已签收', value: 2 },
     { label: '已作废', value: 0 }
+]
+const staffTabs = [
+    { pagePath: 'pages/staff/index', text: '装箱单' },
+    { pagePath: 'pages/staff/uploadImg', text: '上传' }
 ]
 const currentTab = ref('all')
 
@@ -67,35 +71,6 @@ function goToDetail(item) {
     })
 }
 
-function chooseImg() {
-    uni.chooseImage({
-        count: 1,
-        sizeType: ['original', 'compressed'], //可以指定是原图还是压缩图，默认二者都有
-        sourceType: ['album', 'camera'], //从相册选择
-        success: (res) => {
-            uni.showLoading();
-            uni.uploadFile({
-                url: BASEURL + '/api/upload/image', // 服务器上传接口
-                filePath: res.tempFilePaths[0],
-                header: {
-                    'Authorization': 'Bearer ' + uni.getStorageSync("token")
-                },
-                name: 'file', // 这里根据后端需要的字段来定义
-                success: uploadFileRes => {
-                    this.userInfo.head_img = JSON.parse(uploadFileRes.data).data.key
-                    this.submit()
-                    uni.hideLoading();
-                },
-                fail: uploadFileError => {
-                    // 处理上传失败的错误
-                    console.log("上传失败");
-                    uni.hideLoading();
-                }
-            });
-        }
-    })
-}
-
 </script>
 
 <template>
@@ -132,8 +107,10 @@ function chooseImg() {
             </view>
         </view>
         <view v-if="filteredList.length === 0" class="empty">暂无数据</view>
-        <view class="fixed-btn" @click="chooseImg">上传</view>
+        <!-- <view class="fixed-btn" @click="chooseImg">上传</view> -->
+        <CustomTabbar :tabs="staffTabs" current="pages/staff/index" />
     </view>
+
 </template>
 
 

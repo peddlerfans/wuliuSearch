@@ -23,25 +23,31 @@
 			"style": {
 				"navigationBarTitleText": "导入图片"
 			}
+		},
+		{
+			"path": "pages/userSearch/index",
+			"style": {
+				"navigationBarTitleText": "发货查询"
+			}
 		}
 	],
-	"tabBar": {
-		"color": "#666666",
-		"selectedColor": "#1677FF",
-		"borderStyle": "white",
-		"backgroundColor": "#ffffff",
-		"list": [
-			{
-				"pagePath": "pages/staff/index",
-				"text": "装箱单"
-			},
-			{
-				"pagePath": "pages/staff/uploadImg",
-				"text": "上传"
+	// "tabBar": {
+	// 	"color": "#666666",
+	// 	"selectedColor": "#1677FF",
+	// 	"borderStyle": "white",
+	// 	"backgroundColor": "#ffffff",
+	// 	"list": [
+	// 		{
+	// 			"pagePath": "pages/staff/index",
+	// 			"text": "装箱单"
+	// 		},
+	// 		{
+	// 			"pagePath": "pages/staff/uploadImg",
+	// 			"text": "上传"
 		
-			}
-		]
-	},
+	// 		}
+	// 	]
+	// },
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",

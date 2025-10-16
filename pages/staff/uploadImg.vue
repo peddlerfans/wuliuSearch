@@ -99,9 +99,19 @@ function handleUpload() {
 }
 
 function handleCancel() {
-    uploadSuccess.value = false
-    waybillNo.value = ''
-    materialList.value = []
+    // uploadSuccess.value = false
+    uni.showLoading({ title: '取消中...' })
+    staffConfirm({ trade_no: waybillNo.value, status: 1 })
+        .then(() => {
+            uni.hideLoading()
+            uni.showToast({ title: '取消成功', icon: 'success' })
+            uploadSuccess.value = false
+        })
+        .catch(err => {
+            console.error(err)
+            uni.hideLoading()
+            uni.showToast({ title: '提交失败', icon: 'none' })
+        })
 }
 
 function handleConfirm() {

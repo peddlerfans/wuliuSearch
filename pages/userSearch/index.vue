@@ -36,7 +36,7 @@
                             <checkbox
                                 :value="String(item.id)"
                                 :disabled="result.status == 2"
-                                :checked="checkedProducts.includes(String(item.id))"
+                                :checked="result.status == 2 ? (item.status == 1) : checkedProducts.includes(String(item.id))"
                                 class="checkbox"
                                 @click.stop
                             />
@@ -60,7 +60,7 @@
                         placeholder="请输入"
                         rows="4"
                     />
-                    <text v-else>{{ remark }}</text>
+                    <text v-else>{{ remark || '-' }}</text>
                 </view>
                 <view class="extra-row">
                     <text class="label">部门：</text>
@@ -85,7 +85,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { staffDetail ,staffConfirm} from '@/api/staff'
+import { staffDetail ,customConfirm} from '@/api/staff'
 const tradeNo = ref('')
 const result = ref(null)
 const products = ref([])
@@ -121,7 +121,6 @@ const onSearch = async () => {
 }
 
 const onConfirm = () => {
-    // console.log("确认",checkedProducts.value.join(','));
     // return
     // 校验必填项
     if (!deptName.value) {
@@ -136,13 +135,12 @@ const onConfirm = () => {
         uni.showToast({ title: '请选择产品', icon: 'none' })
         return
     }
-    staffConfirm({
+    customConfirm({
         trade_no: tradeNo.value,
-        products: checkedProducts.value.join(','),
+        check_ids: checkedProducts.value.join(','),
         remark: remark.value,
         dept_name: deptName.value,
-        consignee_name: consigneeName.value,
-        status: 1 // 确认签收
+        consignee_name: consigneeName.value
     }).then((res) => {
         if (res.code == 200 || res.code == 0) {
             uni.showToast({ title: '确认成功', icon: 'success' })

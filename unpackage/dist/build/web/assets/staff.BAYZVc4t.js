@@ -1,0 +1,1 @@
+import{r}from"./api.C0Evyluq.js";function t(t){return r({method:"post",url:"/api/user/tradeOrderList",data:t})}function a(t){return r({method:"post",url:"/api/user/tradeOrderInfo",data:t})}function e(t){return r({method:"post",url:"/api/user/setResult",data:t})}function s(t){return r({method:"post",url:"/api/user/checkOrder",data:t})}export{a,e as b,s as c,t as s};

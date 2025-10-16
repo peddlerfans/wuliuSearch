@@ -1,1 +1,0 @@
-import{r}from"./api.DuMj0eHO.js";function t(t){return r({method:"post",url:"/api/user/tradeOrderList",data:t})}function a(t){return r({method:"post",url:"/api/user/tradeOrderInfo",data:t})}function e(t){return r({method:"post",url:"/api/user/setResult",data:t})}export{a,e as b,t as s};

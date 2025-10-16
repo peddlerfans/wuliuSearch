@@ -24,3 +24,13 @@ export function staffConfirm(data) {
     data: data,
   });
 }
+
+// 客户确认
+export function customConfirm(data) {
+  return request({
+    method: "post",
+    url: "/api/user/checkOrder",
+    data: data,
+  });
+}
+

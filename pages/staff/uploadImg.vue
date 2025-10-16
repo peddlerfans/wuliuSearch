@@ -36,24 +36,29 @@
         <button v-if="!uploadSuccess" class="upload-btn" @click="handleUpload" :loading="loading" :disabled="loading">
             {{ loading ? '上传中...' : '开始' }}
         </button>
-        <CustomTabbar :tabs="staffTabs" current="pages/staff/uploadImg" />
     </view>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref ,onMounted} from 'vue'
 import { staffConfirm } from '@/api/staff'
-import CustomTabbar from '@/components/CustomTabbar.vue'
 const BASEURL = 'https://djtestweb.youyong.org.cn'
 
 const uploadSuccess = ref(false)
 const loading = ref(false)
 const waybillNo = ref('')
 const materialList = ref([])
-const staffTabs = [
-    { pagePath: 'pages/staff/index', text: '装箱单' },
-    { pagePath: 'pages/staff/uploadImg', text: '上传' }
-]
+
+onMounted(() => {
+    const storedData = uni.getStorageSync('uploadData')
+    if (storedData) {
+        waybillNo.value = storedData.trade_no || ''
+        materialList.value = storedData.products || []
+        uploadSuccess.value = true
+        uni.removeStorageSync('uploadData') // 清除缓存，防止重复使用
+    }
+})
+
 function handleUpload() {
     uni.chooseImage({
         count: 1,

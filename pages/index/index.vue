@@ -1,12 +1,12 @@
 <template>
 	<view class="login-content">
 		<view class="login-tabs">
-			<view class="login-tab" :class="{ active: loginType === 'customer' }" @click="loginType = 'customer'">
+			<!-- <view class="login-tab" :class="{ active: loginType === 'customer' }" @click="loginType = 'customer'">
 				客户登录
 			</view>
 			<view class="login-tab" :class="{ active: loginType === 'employee' }" @click="loginType = 'employee'">
 				员工登录
-			</view>
+			</view> -->
 		</view>
 		<view class="login-form">
 			<input class="login-input" type="number" v-model="phone" placeholder="请输入手机号" />
@@ -33,7 +33,7 @@
 import { ref, computed } from 'vue'
 import { login } from "@/api/login" // 假设有一个登录的API
 
-const loginType = ref('customer')
+const loginType = ref('employee')
 const checked = ref(false)
 const password = ref('')
 const phone = ref('')

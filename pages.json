@@ -29,6 +29,12 @@
 			"style": {
 				"navigationBarTitleText": "发货查询"
 			}
+		},
+		{
+			"path": "pages/userSearch/detail",
+			"style": {
+				"navigationBarTitleText": "查询结果"
+			}
 		}
 	],
 	// "tabBar": {

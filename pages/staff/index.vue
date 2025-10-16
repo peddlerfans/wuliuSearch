@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app';
 import { staffList } from '@/api/staff'
-import CustomTabbar from '@/components/CustomTabbar.vue'
+const BASEURL = 'https://djtestweb.youyong.org.cn'
 const tabs = [
     { label: '全部', value: 'all' },
     { label: '待签收', value: 1 },
@@ -10,10 +10,7 @@ const tabs = [
     { label: '已签收', value: 2 },
     { label: '已作废', value: 0 }
 ]
-const staffTabs = [
-    { pagePath: 'pages/staff/index', text: '装箱单' },
-    { pagePath: 'pages/staff/uploadImg', text: '上传' }
-]
+
 const currentTab = ref('all')
 
 const waybillList = ref([])
@@ -71,6 +68,51 @@ function goToDetail(item) {
     })
 }
 
+function chooseImg(){
+     uni.chooseImage({
+        count: 1,
+        sizeType: ['original', 'compressed'],
+        sourceType: ['album', 'camera'],
+        success: (res) => {
+            uni.showLoading({ title: '上传中...' })
+            uni.uploadFile({
+                url: BASEURL + '/api/upload/image',
+                filePath: res.tempFilePaths[0],
+                header: {
+                    'Authorization': 'Bearer ' + uni.getStorageSync("token")
+                },
+                name: 'file',
+                success: uploadFileRes => {
+                    try {
+                        const result = JSON.parse(uploadFileRes.data)
+                        if ((result.code === 200 || result.code === 0) && result.data) {
+                            uni.setStorageSync('uploadData', result.data)
+                            uni.navigateTo({
+                                url: '/pages/staff/uploadImg'
+                            })
+                            // const data = result.data
+                            // waybillNo.value = data.trade_no || ''
+                            // materialList.value = data.products || []
+                            // uploadSuccess.value = true
+                        } else {
+                            uni.showToast({ title: '上传失败：' + (result.msg || '未知错误'), icon: 'none' })
+                        }
+                    } catch (e) {
+                        console.error('解析失败', e)
+                        uni.showToast({ title: '返回数据异常', icon: 'none' })
+                    }
+                    uni.hideLoading()
+                },
+                fail: err => {
+                    console.error('上传失败', err)
+                    uni.hideLoading()
+                    uni.showToast({ title: '上传失败', icon: 'none' })
+                }
+            })
+        }
+    })
+}
+
 </script>
 
 <template>
@@ -107,8 +149,7 @@ function goToDetail(item) {
             </view>
         </view>
         <view v-if="filteredList.length === 0" class="empty">暂无数据</view>
-        <!-- <view class="fixed-btn" @click="chooseImg">上传</view> -->
-        <CustomTabbar :tabs="staffTabs" current="pages/staff/index" />
+        <view class="fixed-btn" @click="chooseImg">上传</view>
     </view>
 
 </template>
@@ -256,15 +297,18 @@ function goToDetail(item) {
 }
 
 .fixed-btn {
+    width: 120rpx;
+    height: 120rpx;
+    line-height: 120rpx;
+    text-align: center;
     position: fixed;
     right: 48rpx;
     bottom: 88rpx;
     z-index: 100;
-    background: #1677ff;
+    background: #e32d2d;
     color: #fff;
     border: none;
     border-radius: 50%;
-    padding: 38rpx 38rpx;
     font-size: 30rpx;
     font-weight: 600;
     box-shadow: 0 4rpx 16rpx rgba(22, 119, 255, 0.15);
